@@ -137,7 +137,7 @@ async function run() {
         app.delete('/users/:id', /* verifyJWT, verifyAdmin, */ async (req, res) => {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) }
-            const result = await sellersCollection.deleteOne(filter);
+            const result = await usersCollection.deleteOne(filter);
             res.send(result);
         })
 

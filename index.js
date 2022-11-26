@@ -134,10 +134,10 @@ async function run() {
             }
             res.status(403).send({ accessToken: '' })
         })
-        app.delete('/sellers/:id', verifyJWT, verifyAdmin, async (req, res) => {
+        app.delete('/users/:id', /* verifyJWT, verifyAdmin, */ async (req, res) => {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) }
-            const result = await doctorsCollection.deleteOne(filter);
+            const result = await sellersCollection.deleteOne(filter);
             res.send(result);
         })
 

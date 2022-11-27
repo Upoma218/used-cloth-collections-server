@@ -74,12 +74,28 @@ async function run() {
             const product = await productsCollection.find(query).toArray();
             res.send(product);
         })
-
-        // Products post api
-        app.post('/products', verifyJWT, verifySeller, async (req, res) => {
-            const product = req.body;
-            const result = await productsCollection.insertOne(product);
+        // Products get api
+        app.get('/reportedProducts/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const query = await productsCollection.findOne(filter);
+            const result = await productsCollection.findOne(query);
             res.send(result);
+        })
+
+       
+        // Reported products api
+        app.put('/reportedProducts/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updatedDoc = {
+                $set: {
+                    report: 'reported'
+                }
+            }
+            const result = await productsCollection.updateOne(filter, updatedDoc, options);
+            res.send(result)
         })
 
         // Products get api according to category
@@ -123,19 +139,36 @@ async function run() {
         })
         
         // All Buyers api
-        app.get('/buyerUser', /* verifyJWT, */  async (req, res) => {
+        app.get('/buyerUser', verifyJWT, verifyAdmin,  async (req, res) => {
             const query = {role:"Buyer"}
             const user = await usersCollection.find(query).toArray();
             res.send(user);
         })
 
         // All Sellers api
-        app.get('/sellerUser',/*  verifyJWT, */ async (req, res) => {
+        app.get('/sellerUser', verifyJWT, verifyAdmin, async (req, res) => {
             const query = {role:"Seller"}
             const user = await usersCollection.find(query).toArray();
             res.send(user);
         })
+
+        app.get('/sellerUser/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const email = await usersCollection.findOne(filter);
+            const query = { email: email.email};
+            const result = await productsCollection.findOne(query);
+            res.send(result);
+        })
        
+
+        // Verified seller display
+        app.get('/userEmail', async (req, res) => {
+            const userEmail = req.query.email;
+            const query = { email: userEmail };
+            const result = await usersCollection.find(query).toArray();
+            res.send(result)
+          })
 
         // Check admin api
         app.get('/users/admin/:email', async (req, res) => {

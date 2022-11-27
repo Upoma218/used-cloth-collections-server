@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('mongodb');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
@@ -45,9 +45,8 @@ async function run() {
         const usersCollection = client.db('usedCloth').collection('users');
         const paymentsCollection = client.db('usedCloth').collection('payments');
 
-        // verifyAdmin
-      /*    const verifyAdmin = async (req, res, next) => {
-            // console.log('verifyAdmin', req.decoded.email);
+        //  verifyAdmin
+         const verifyAdmin = async (req, res, next) => {
             const decodedEmail = req.decoded.email;
             const query = { email: decodedEmail };
             const user = await usersCollection.findOne(query);
@@ -55,12 +54,11 @@ async function run() {
                 return ren.status(403).send({ message: 'Forbidden Access' })
             }
             next();
-        } */
+        } 
 
 
         // verifySeller
-      /*    const verifySeller = async (req, res, next) => {
-            // console.log('verifySeller', req.decoded.email);
+          /* const verifySeller = async (req, res, next) => {
             const decodedEmail = req.decoded.email;
             const query = { email: decodedEmail };
             const user = await usersCollection.findOne(query);
@@ -68,13 +66,14 @@ async function run() {
                 return ren.status(403).send({ message: 'Forbidden Access' })
             }
             next();
-        } */
+        } */ 
+
         app.get('/products', async (req, res) => {
             const query = {};
             const product = await productsCollection.find(query).toArray();
             res.send(product);
         })
-        app.post('/products', verifyJWT, /* verifyAdmin, */ async (req, res) => {
+        app.post('/products', verifyJWT, async (req, res) => {
             const product = req.body;
             const result = await productsCollection.insertOne(product);
             res.send(result);
@@ -111,7 +110,7 @@ async function run() {
 
         });
 
-        app.put('/users/admin/:id',  verifyJWT, /*verifyAdmin, */ async (req, res) => {
+       /*  app.put('/users/admin/:id',  verifyJWT, verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
             const options = { upsert: true };
@@ -122,7 +121,7 @@ async function run() {
             }
             const result = await usersCollection.updateOne(filter, updatedDoc, options);
             res.send(result)
-        })
+        }) */
       
         app.get('/jwt', async (req, res) => {
             const email = req.query.email;
@@ -134,9 +133,9 @@ async function run() {
             }
             res.status(403).send({ accessToken: '' })
         })
-        app.delete('/users/:id', /* verifyJWT, verifyAdmin, */ async (req, res) => {
+        app.delete('/users/:id',  verifyJWT, verifyAdmin,  async (req, res) => {
             const id = req.params.id;
-            const filter = { _id: ObjectId(id) }
+            const filter = { _id: ObjectId(id)}
             const result = await usersCollection.deleteOne(filter);
             res.send(result);
         })

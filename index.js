@@ -41,7 +41,7 @@ async function run() {
     try{
         const productsCollection = client.db('usedCloth').collection('products');
         const advertiseProductsCollection = client.db('usedCloth').collection('advertiseProducts');
-        const categoryProductsCollection = client.db('usedCloth').collection('categoryProducts');
+        const categoriesCollection = client.db('usedCloth').collection('category');
         const usersCollection = client.db('usedCloth').collection('users');
         const paymentsCollection = client.db('usedCloth').collection('payments');
 
@@ -73,15 +73,28 @@ async function run() {
             const product = await productsCollection.find(query).toArray();
             res.send(product);
         })
-        app.post('/products', verifyJWT, async (req, res) => {
+        app.post('/products', verifyJWT, verifySeller, async (req, res) => {
             const product = req.body;
             const result = await productsCollection.insertOne(product);
             res.send(result);
+        })
+
+        app.get('/categories', async (req, res) => {
+            const query = {};
+            const category = await categoriesCollection.find(query).toArray();
+            res.send(category);
         })
         app.get('/users', async (req, res) => {
             const query = {};
             const users = await usersCollection.find(query).toArray();
             res.send(users);
+        })
+     
+        app.get('/users/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = {email};
+            const user = await usersCollection.findOne(query);
+            res.send(user);
         })
      
 
@@ -97,6 +110,7 @@ async function run() {
             const user = await usersCollection.find(query).toArray();
             res.send(user);
         })
+       
 
         app.get('/users/admin/:email', async (req, res) => {
             const email = req.params.email;
@@ -122,19 +136,21 @@ async function run() {
             res.send(result);
 
         });
+        app.put('/users/sellers/:id', verifyJWT, verifyAdmin, async (req, res) => {
 
-       app.put('/users/sellers/:id',  verifyJWT, verifyAdmin, async (req, res) => {
+
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
             const options = { upsert: true };
             const updatedDoc = {
                 $set: {
-                    role: 'seller'
+                    verification: 'verified'
                 }
             }
             const result = await usersCollection.updateOne(filter, updatedDoc, options);
             res.send(result)
-        }) 
+        })
+       
       
         app.get('/jwt', async (req, res) => {
             const email = req.query.email;

@@ -59,15 +59,15 @@ async function run() {
 
 
         // verifySeller
-           const verifySeller = async (req, res, next) => {
-            const decodedEmail = req.decoded.email;
-            const query = { email: decodedEmail };
-            const user = await usersCollection.findOne(query);
-            if (user?.role !== 'Seller') {
-                return res.status(403).send({ message: 'Forbidden Access' })
-            }
-            next();
-        }
+        //    const verifySeller = async (req, res, next) => {
+        //     const decodedEmail = req.decoded.email;
+        //     const query = { email: decodedEmail };
+        //     const user = await usersCollection.findOne(query);
+        //     if (user?.role !== 'Seller') {
+        //         return res.status(403).send({ message: 'Forbidden Access' })
+        //     }
+        //     next();
+        // }
 
         // Products get api
         app.get('/products', async (req, res) => {
@@ -75,8 +75,13 @@ async function run() {
             const product = await productsCollection.find(query).toArray();
             res.send(product);
         })
+        app.get('/bookings', async (req, res) => {
+            const query = {};
+            const booking = await bookingsCollection.find(query).toArray();
+            res.send(booking);
+        })
 
-        app.post('/products', async (req, res) => {
+        app.post('/products',async (req, res) => {
             const products = req.body;
             const result = await productsCollection.insertOne(products);
             res.send(result);
@@ -91,6 +96,17 @@ async function run() {
             }
             const query = { email: email };
             const orders = await productsCollection.find(query).toArray();
+            res.send(orders);
+
+        })
+        app.get('/paid', verifyJWT, async (req, res) => {
+            const email = req.query.email;
+            const decodedEmail = req.decoded.email;
+            if (email !== decodedEmail) {
+                return res.status(403).send({ message: 'Forbidden Access' })
+            }
+            const query = { email: email };
+            const orders = await bookingsCollection.find(query).toArray();
             res.send(orders);
 
         })
@@ -147,10 +163,7 @@ async function run() {
         app.post('/bookings', async (req, res) => {
             const booking = req.body;
             // console.log(booking);
-            const query = {
-                email: booking.email
-            }
-            const result = await bookingsCollection.insertOne(query);
+            const result = await bookingsCollection.insertOne(booking);
             res.send(result);
         })
 
@@ -207,6 +220,11 @@ async function run() {
         app.get('/sellerUser', verifyJWT, verifyAdmin, async (req, res) => {
             const query = {role:"Seller"}
             const user = await usersCollection.find(query).toArray();
+            res.send(user);
+        })
+        app.get('/advertised', verifyJWT, async (req, res) => {
+            const query = {advertise: 'advertised'}
+            const user = await productsCollection.find(query).toArray();
             res.send(user);
         })
 
@@ -302,8 +320,7 @@ async function run() {
         })
 
         // payment put
-        app.put('/products', verifyJWT, verifyAdmin, async (req, res) => {
-
+        app.put('/products', verifyJWT,  async (req, res) => {
 
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
@@ -311,6 +328,19 @@ async function run() {
             const updatedDoc = {
                 $set: {
                     status: 'paid'
+                }
+            }
+            const result = await productsCollection.updateOne(filter, updatedDoc, options);
+            res.send(result)
+        })
+        app.put('/advertised/:id', verifyJWT,  async (req, res) => {
+
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updatedDoc = {
+                $set: {
+                    advertise: 'advertised'
                 }
             }
             const result = await productsCollection.updateOne(filter, updatedDoc, options);
@@ -330,6 +360,13 @@ async function run() {
             res.status(403).send({ accessToken: '' })
         })
 
+        // Delete product api
+        app.delete('/products/:id',  verifyJWT,  async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id)}
+            const result = await productsCollection.deleteOne(filter);
+            res.send(result);
+        })
         // Delete seller api
         app.delete('/users/:id',  verifyJWT, verifyAdmin,  async (req, res) => {
             const id = req.params.id;
